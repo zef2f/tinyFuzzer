@@ -17,8 +17,8 @@ def population_coverage(population: List[str], function: Callable) -> Tuple[Set[
         with Coverage() as cov:
             try:
                 function(s)
-            except:
-                pass
+            except Exception as e:
+                print(f"Error detected for input {s}: {e}")
         all_coverage |= cov.coverage()
         cumulative_coverage.append(len(all_coverage))
 
@@ -29,10 +29,30 @@ def hundred_inputs(fuzzer: RandomFuzzer) -> List[str]:
     return [fuzzer.fuzz() for _ in range(trials)]
 
 
+def compare_with_oracle(fuzzer: RandomFuzzer, oracle: Callable, function: Callable, trials: int) -> None:
+    """Compare results of `function` and `oracle` for the same inputs."""
+    for _ in range(trials):
+        s = fuzzer.fuzz()
+        try:
+            oracle_result = oracle(s)
+            function_result = function(s)
+            assert oracle_result == function_result, f"Mismatch for input {s}: {oracle_result} != {function_result}"
+        except Exception as e:
+            print(f"Error comparing results for input {s}: {e}")
+
+
 if __name__ == "__main__":
     random_fuzzer = RandomFuzzer(min_length=5, max_length=20, char_start=32, char_range=95)
 
     sum_coverage = [0] * trials
+
+    # Compare `cgi_decode` with an oracle function
+    def oracle(s: str) -> str:
+        """Python reference implementation of CGI decode."""
+        from urllib.parse import unquote_plus
+        return unquote_plus(s)
+
+    compare_with_oracle(random_fuzzer, oracle, cgi_decode, trials)
 
     for run in range(runs):
         _, coverage = population_coverage(hundred_inputs(random_fuzzer), cgi_decode)
