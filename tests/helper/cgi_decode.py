@@ -19,6 +19,8 @@ def cgi_decode(s: str) -> str:
         if c == '+':
             t += ' '
         elif c == '%':
+            if i + 2 >= len(s):
+                raise ValueError("Invalid symbol after \'%\'")
             digit_high, digit_low = s[i + 1], s[i + 2]
             i += 2
             if digit_high in hex_values and digit_low in hex_values:
@@ -30,3 +32,11 @@ def cgi_decode(s: str) -> str:
             t += c
         i += 1
     return t
+
+if __name__ == "__main__":
+    user_input = input("Введите строку в формате CGI: ")
+    try:
+        decoded_string = cgi_decode(user_input)
+        print("Декодированная строка:", decoded_string)
+    except ValueError as e:
+        print("Ошибка:", e)
