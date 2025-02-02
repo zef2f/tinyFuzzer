@@ -121,3 +121,8 @@ python3 -m unittest discover -s tests
   ```bash
   PYTHONPATH=$(pwd) python3 fuzzers/real_troff_fuzzer.py
   ```
+
+## License
+
+This project is licensed under the **GNU General Public License v3.0 (GPLv3)**.  
+The full text of the license is available in the [`LICENSE`](LICENSE) file.
