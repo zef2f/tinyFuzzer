@@ -1,7 +1,7 @@
 # tests/test_fuzzer.py
 import unittest
 from core.coverage import Coverage
-from tests.helper.cgi_decode import cgi_decode
+from targets.cgi_decode import cgi_decode
 
 class TestCoverage(unittest.TestCase):
     
