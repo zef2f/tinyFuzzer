@@ -1,9 +1,10 @@
 # fuzzers/cgi_decode_fuzzer.py
 
 import matplotlib.pyplot as plt
+import inspect
 from core.coverage import Coverage
-from tests.helper.cgi_decode import cgi_decode
 from core.fuzzer.random_fuzzer import RandomFuzzer
+from targets.cgi_decode import cgi_decode
 from typing import List, Tuple, Callable, Set
 
 trials = 100
@@ -18,7 +19,8 @@ def population_coverage(population: List[str], function: Callable) -> Tuple[Set[
             try:
                 function(s)
             except Exception as e:
-                print(f"Error detected for input {s}: {e}")
+                # print(f"Error detected for input {s}: {e}")
+                pass
         all_coverage |= cov.coverage()
         cumulative_coverage.append(len(all_coverage))
 
@@ -42,7 +44,7 @@ def compare_with_oracle(fuzzer: RandomFuzzer, oracle: Callable, function: Callab
 
 
 if __name__ == "__main__":
-    random_fuzzer = RandomFuzzer(min_length=5, max_length=20, char_start=32, char_range=95)
+    random_fuzzer = RandomFuzzer(min_length=5, max_length=200, char_start=32, char_range=95)
 
     sum_coverage = [0] * trials
 
@@ -53,17 +55,23 @@ if __name__ == "__main__":
         return unquote_plus(s)
 
     compare_with_oracle(random_fuzzer, oracle, cgi_decode, trials)
-
+    
     for run in range(runs):
         _, coverage = population_coverage(hundred_inputs(random_fuzzer), cgi_decode)
         assert len(coverage) == trials
         for i in range(trials):
             sum_coverage[i] += coverage[i]
 
+    source_lines, start_line_number = inspect.getsourcelines(cgi_decode)
+
+    max_coverage = [len(source_lines) for i in range(trials)]
+
     average_coverage = [sum_coverage[i] / runs for i in range(trials)]
 
+    average_coverage_proc = [average_coverage[i] * 100 / max_coverage[i] for i in range(trials)]
+
     plt.figure(figsize=(10, 6))
-    plt.plot(average_coverage, label="Average Coverage", color="blue")
+    plt.plot(average_coverage_proc, label="Average Coverage (%)", color="blue")
     plt.title('Average coverage of cgi_decode() with random inputs')
     plt.xlabel('# of inputs')
     plt.ylabel('Lines Covered')
