@@ -18,6 +18,21 @@ class Coverage:
         """Constructor"""
         self._trace: List[Location] = []
         self.original_trace_function = None
+    
+    def population_base_coverage(population, function):
+        cumulative_coverage = []
+        all_coverage = set()
+
+        for s in population:
+            with Coverage() as cov:
+                try:
+                    function(s)
+                except Exception:
+                    pass
+            all_coverage |= cov.coverage()
+            cumulative_coverage.append(len(all_coverage))
+
+        return all_coverage, cumulative_coverage
 
     def traceit(self, frame: FrameType, event: str, arg: Any) -> Optional[Callable]:
         """Tracing function."""

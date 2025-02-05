@@ -14,39 +14,16 @@ class BranchCoverage(Coverage):
     c = cov.coverage()
     ```
     """
+    def coverage(self):
+        """The set of executed line pairs"""
+        coverage = set()
+        past_line = None
+        for line in self.trace():
+            if past_line is not None:
+                coverage.add((past_line, line))
+            past_line = line
 
-    def coverage(self) -> Set[Tuple[Location, Location]]:
-        """The set of pairs of consecutive lines in the source code."""
-        trace = self.trace()
-        result = set()
-
-        # Iterate through the trace and check for consecutive lines
-        for i in range(len(trace) - 1):
-            current_line = trace[i]
-            next_line = trace[i + 1]
-            
-            # Only include pairs where the lines are consecutive
-            if current_line[1] + 1 == next_line[1]:
-                result.add((current_line, next_line))
-        
-        return result
-
-    def coverage_cgi_decode(self) -> Set[Tuple[Location, Location]]:
-        """The set of pairs of consecutive lines in the source code (only for cgi_decode)."""
-        trace = self.trace()
-        result = set()
-
-        # Iterate through the trace and check for consecutive lines
-        for i in range(len(trace) - 1):
-            current_line = trace[i]
-            next_line = trace[i + 1]
-        
-            # Only include pairs for the target function
-            if current_line[0] == "cgi_decode" and next_line[0] == "cgi_decode":
-                if current_line[1] + 1 == next_line[1]:
-                    result.add((current_line, next_line))
-    
-        return result
+        return coverage
     
     def function_names(self) -> Set[str]:
         """The set of function names seen."""
@@ -57,6 +34,21 @@ class BranchCoverage(Coverage):
             for function_name, _ in pair
     
         )
+
+    def population_branch_coverage(population, function):
+        cumulative_coverage = []
+        all_coverage = set()
+
+        for s in population:
+            with BranchCoverage() as cov:
+                try:
+                    function(s)
+                except Exception:
+                    pass
+            all_coverage |= cov.coverage()
+            cumulative_coverage.append(len(all_coverage))
+        
+        return all_coverage, cumulative_coverage
 
     def __repr__(self) -> str:
         """Return a string representation showing covered lines."""

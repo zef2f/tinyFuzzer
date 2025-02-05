@@ -10,34 +10,33 @@ Location = Tuple[str, int]
 
 if __name__ == "__main__":
     # Создаем фаззер с заданными параметрами
-    random_fuzzer = RandomFuzzer(min_length=5, max_length=20, char_start=32, char_range=95)
+    random_fuzzer = RandomFuzzer(min_length=5, max_length=20, char_start=32, char_range=64)
     total_iterations = 10 # Количество итераций фаззинга
     coverage_progress = []
 
     # Инициализируем общий coverage для всех итераций
-    with BranchCoverage() as overall_coverage:
-        for iteration in range(total_iterations):
+    for iteration in range(total_iterations):
             # Отдельный coverage для текущей итерации
-            with BranchCoverage() as iteration_coverage:
-                try:
+        with BranchCoverage() as iteration_coverage:
+            try:
                     # Генерируем входные данные и передаем их в целевую функцию
-                    fuzz_input = random_fuzzer.fuzz()
-                    cgi_decode(fuzz_input)
-                except Exception as e:
-                    pass  # Игнорируем исключения
+                fuzz_input = random_fuzzer.fuzz()
+                cgi_decode(fuzz_input)
+            except Exception as e:
+                pass  # Игнорируем исключения
 
-            print(overall_coverage.coverage_cgi_decode())
+        print(iteration_coverage.coverage())
 
             # Фильтруем покрытие только для функции `cgi_decode`
-            filtered_coverage: Set[Tuple[Location, Location]] = {
-                pair for pair in overall_coverage.coverage_cgi_decode() if pair[0][0] == 'cgi_decode'
-            }
+        filtered_coverage: Set[Tuple[Location, Location]] = {
+            pair for pair in iteration_coverage.coverage() if pair[0][0] == 'cgi_decode'
+        }
 
             # Вывод текущего покрытия в консоль
-            print(f"Iteration {iteration + 1}: {len(filtered_coverage)} branches covered")
+        print(f"Iteration {iteration + 1}: {len(filtered_coverage)} branches covered")
 
             # Добавляем размер покрытия в список прогресса
-            coverage_progress.append(len(filtered_coverage))
+    coverage_progress.append(len(filtered_coverage))
 
     # Визуализируем рост покрытия
     plt.figure(figsize=(10, 6))
